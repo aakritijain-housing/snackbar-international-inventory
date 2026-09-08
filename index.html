@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Housing SRP – Sector 89 Gurgaon</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500&display=swap">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      overflow: hidden;
+      font-family: 'Rubik', system-ui, sans-serif;
+    }
+
+    #canvas {
+      position: relative;
+      width: 100vw;
+      aspect-ratio: 1709 / 1000;
+      max-height: 100vh;
+      margin: auto;
+      overflow: hidden;
+    }
+
+    #base-image {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: fill;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    /* ── Houzy Touchpoint ── */
+    #houzy-touchpoint {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      border: none;
+      background: none;
+      padding: 0;
+      cursor: pointer;
+      z-index: 10;
+      transform: translateY(0);
+      opacity: 1;
+      transition:
+        transform 0.35s cubic-bezier(0.34, 1.10, 0.64, 1),
+        opacity 0.2s ease;
+    }
+
+    #houzy-touchpoint:hover {
+      transform: translateY(-4px);
+    }
+
+    #houzy-touchpoint.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #houzy-touchpoint img {
+      display: block;
+      max-height: 72px;
+      width: auto;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* ── Houzy Panel ── */
+    #houzy-panel {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      width: 400px;
+      height: 900px;
+      max-height: calc(100% - 32px);
+      background: white;
+      border: 1px solid #f5f5f5;
+      border-radius: 16px;
+      box-shadow: -3px -3px 23.5px rgba(0, 0, 0, 0.16);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 16px;
+      overflow: hidden;
+      z-index: 20;
+
+      /* hidden state */
+      opacity: 0;
+      transform: translateY(20px) scale(0.96);
+      pointer-events: none;
+      transform-origin: bottom right;
+      transition:
+        opacity 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    #houzy-panel.open {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: all;
+    }
+
+    /* ── Header ── */
+    .hp-header {
+      width: 100%;
+      background: white;
+      display: flex;
+      justify-content: center;
+      padding: 16px 0;
+      border-radius: 16px 16px 0 0;
+      flex-shrink: 0;
+    }
+
+    .hp-header-inner {
+      width: 368px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Houzy brand pill */
+    .hp-brand-pill {
+      height: 40px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0 12px;
+      background: white;
+      border-radius: 100px;
+      box-shadow: 0 0 6px rgba(0, 0, 0, 0.06);
+    }
+
+    .hp-brand-name {
+      font-family: 'Rubik', sans-serif;
+      font-weight: 400;
+      font-size: 16px;
+      line-height: 20px;
+      color: #222;
+    }
+
+    .hp-beta {
+      background: #f5f5f5;
+      border-radius: 100px;
+      padding: 4px 8px;
+      display: flex;
+      align-items: center;
+    }
+
+    .hp-beta-text {
+      font-family: 'Rubik', sans-serif;
+      font-weight: 400;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      background: linear-gradient(180deg, #5e23dc 0%, #22006b 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+    }
+
+    .hp-info-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      height: 100%;
+      background: #f5f5f5;
+      border-radius: 100px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .hp-info-btn img {
+      width: 16px;
+      height: 16px;
+      display: block;
+    }
+
+    /* Close area */
+    .hp-close-area {
+      width: 91px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .hp-close-btn {
+      width: 40px;
+      height: 40px;
+      background: white;
+      border: none;
+      border-radius: 24px;
+      box-shadow: 0 0 6px rgba(0, 0, 0, 0.06);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+
+    .hp-close-btn:hover { background: #f5f5f5; }
+
+    .hp-close-btn img {
+      width: 16px;
+      height: 16px;
+      display: block;
+    }
+
+    /* ── Body ── */
+    .hp-body {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .hp-heading {
+      font-family: 'Rubik', sans-serif;
+      font-weight: 500;
+      font-size: 24px;
+      line-height: 28px;
+      color: #434343;
+      text-align: center;
+      width: 302px;
+      letter-spacing: 0;
+    }
+
+    /* ── Pills ── */
+    .pills-section {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow: hidden;
+    }
+
+    .pills-row-wrap {
+      width: 100%;
+      overflow: hidden;
+      /* left-edge fade matching Figma gradient at ~60px, right edge at ~30px */
+      -webkit-mask-image: linear-gradient(
+        to right,
+        transparent 0%,
+        #000 60px,
+        #000 calc(100% - 30px),
+        transparent 100%
+      );
+      mask-image: linear-gradient(
+        to right,
+        transparent 0%,
+        #000 60px,
+        #000 calc(100% - 30px),
+        transparent 100%
+      );
+    }
+
+    .pills-track {
+      display: flex;
+      gap: 12px;
+      width: max-content;
+      animation: pills-scroll 22s linear infinite;
+    }
+
+    .pills-track.row2 { animation-duration: 28s; }
+
+    @keyframes pills-scroll {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      border-radius: 24px;
+      background: white;
+      border-width: 1px;
+      border-style: solid;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .pill img {
+      width: 16px;
+      height: 16px;
+      display: block;
+      flex-shrink: 0;
+    }
+
+    .pill-text {
+      font-family: 'Rubik', sans-serif;
+      font-weight: 400;
+      font-size: 14px;
+      line-height: 16px;
+      color: #656565;
+      letter-spacing: 0;
+    }
+
+    /* ── Footer ── */
+    .hp-footer {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .hp-input-wrap {
+      padding: 0 16px;
+    }
+
+    .hp-search-bar {
+      width: 100%;
+      background: white;
+      border: 1px solid #e1e2e8;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-left: 16px;
+      height: 52px;
+    }
+
+    .hp-input {
+      flex: 1;
+      border: none;
+      background: none;
+      font-family: 'Rubik', sans-serif;
+      font-weight: 400;
+      font-size: 14px;
+      line-height: 16px;
+      color: #333;
+      outline: none;
+    }
+
+    .hp-input::placeholder { color: #767676; }
+
+    .hp-send-wrap {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+    }
+
+    .hp-send-btn {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: none;
+      padding: 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hp-send-btn img {
+      width: 28px;
+      height: 28px;
+      display: block;
+    }
+
+    .hp-disclaimer {
+      padding: 0 16px;
+      font-family: 'Rubik', sans-serif;
+      font-weight: 400;
+      font-size: 10px;
+      line-height: 12px;
+      color: #767676;
+      text-align: center;
+      letter-spacing: 0.6px;
+    }
+
+    /* ── Intl Inventory Snackbar 1 — right edge aligned with Houzy Touchpoint ── */
+    #intl-snackbar {
+      position: absolute;
+      right: 24px;
+      /* bottom set dynamically by JS */
+      width: 427px;
+      height: 44px;
+      background: #ffffff;
+      border-radius: 12px;
+      /* Elevations/02: two-layer shadow */
+      box-shadow:
+        0px 2px 4px -1px rgba(0, 0, 0, 0.071),
+        0px 2px 8px 0px rgba(0, 0, 0, 0.102);
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      gap: 20px;
+      z-index: 15;
+      flex-shrink: 0;
+      /* start invisible; JS drives appearance */
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.32s ease, transform 0.32s ease;
+    }
+
+    @keyframes sb-pop {
+      0%   { opacity: 0; transform: translateY(30px); animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1); }
+      35%  { opacity: 1; transform: translateY(-16px); animation-timing-function: cubic-bezier(0.755, 0.05, 0.855, 0.06); }
+      55%  { transform: translateY(0);   animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1); }
+      72%  { transform: translateY(-8px); animation-timing-function: cubic-bezier(0.755, 0.05, 0.855, 0.06); }
+      88%  { transform: translateY(0);   animation-timing-function: ease-out; }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    /* left group: icon + label */
+    .sb-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .sb-info-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      display: block;
+    }
+
+    .sb-label {
+      font-family: 'Google Sans', 'DM Sans', system-ui, sans-serif;
+      font-weight: 400;
+      font-size: 14px;
+      line-height: 20px;
+      color: #0f0e0d;
+      letter-spacing: 0px;
+      white-space: nowrap;
+    }
+
+    /* right group: cities + close */
+    .sb-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    .sb-city-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      min-height: 20px;
+      max-height: 20px;
+      padding: 0;
+      border-radius: 8px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+
+    .sb-city-label {
+      font-family: 'Google Sans', 'DM Sans', system-ui, sans-serif;
+      font-weight: 500;
+      font-size: 14px;
+      line-height: 20px;
+      color: #4a16d9;
+      letter-spacing: 0.1px;
+      white-space: nowrap;
+    }
+
+    .sb-city-chevron {
+      width: 16px;
+      height: 16px;
+      display: block;
+      flex-shrink: 0;
+    }
+
+    .sb-sep {
+      width: 1px;
+      height: 16px;
+      background: #DDD9CE;
+      flex-shrink: 0;
+      display: block;
+      border: none;
+    }
+
+    .sb-close {
+      display: flex;
+      align-items: center;
+      align-self: stretch;
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .sb-close-icon {
+      width: 20px;
+      height: 20px;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="canvas">
+    <img id="base-image" src="Buy.jpg" alt="Housing SRP – Flats for Sale in Sector 89, Gurgaon" draggable="false">
+
+    <!-- ── Houzy Panel ── -->
+    <div id="houzy-panel" role="dialog" aria-modal="true" aria-label="Houzy">
+
+      <div class="hp-header">
+        <div class="hp-header-inner">
+          <div class="hp-brand-pill">
+            <span class="hp-brand-name">Houzy</span>
+            <div class="hp-beta">
+              <span class="hp-beta-text">BETA</span>
+            </div>
+            <button class="hp-info-btn" aria-label="About Houzy">
+              <img src="https://www.figma.com/api/mcp/asset/76c1b470-5541-4089-9df3-3eb8b96bb43e.svg" alt="">
+            </button>
+          </div>
+          <div class="hp-close-area">
+            <button class="hp-close-btn" id="houzy-close" aria-label="Close">
+              <img src="https://www.figma.com/api/mcp/asset/800e6944-00c4-46af-a5aa-757916ab1401.svg" alt="">
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="hp-body">
+        <p class="hp-heading">Hey, how can I help you today?</p>
+        <div class="pills-section">
+          <div class="pills-row-wrap">
+            <div class="pills-track row1" id="track1"></div>
+          </div>
+          <div class="pills-row-wrap">
+            <div class="pills-track row2" id="track2"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hp-footer">
+        <div class="hp-input-wrap">
+          <div class="hp-search-bar">
+            <input class="hp-input" type="text" placeholder="Ask Houzy">
+            <div class="hp-send-wrap">
+              <button class="hp-send-btn" aria-label="Send">
+                <img src="https://www.figma.com/api/mcp/asset/c4df84b2-a8a0-459c-b58e-a1c932318770.svg" alt="">
+              </button>
+            </div>
+          </div>
+        </div>
+        <p class="hp-disclaimer">Houzy is an AI assistant and may occasionally make mistakes.</p>
+      </div>
+    </div>
+
+    <!-- ── Intl Inventory Snackbar 1 ── -->
+    <div id="intl-snackbar">
+      <div class="sb-left">
+        <img class="sb-info-icon" src="https://www.figma.com/api/mcp/asset/ff8cc7bb-032f-44f2-bc59-5a25627e3a56.svg" alt="">
+        <span class="sb-label">Invest beyond India</span>
+      </div>
+      <div class="sb-right">
+        <button class="sb-city-btn" aria-label="Explore Dubai">
+          <span class="sb-city-label">Dubai</span>
+          <img class="sb-city-chevron" src="https://www.figma.com/api/mcp/asset/f263f32f-4a1f-463f-b048-e995bc29cb4f.svg" alt="">
+        </button>
+        <span class="sb-sep" aria-hidden="true"></span>
+        <button class="sb-city-btn" aria-label="Explore Abu Dhabi">
+          <span class="sb-city-label">Abu Dhabi</span>
+          <img class="sb-city-chevron" src="https://www.figma.com/api/mcp/asset/f263f32f-4a1f-463f-b048-e995bc29cb4f.svg" alt="">
+        </button>
+        <button class="sb-close" id="intl-snackbar-close" aria-label="Dismiss">
+          <img class="sb-close-icon" src="https://www.figma.com/api/mcp/asset/9bd1ea57-1091-4962-ac54-f3345b842872.svg" alt="">
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Houzy Touchpoint ── -->
+    <button id="houzy-touchpoint" aria-label="Open Houzy" aria-expanded="false">
+      <img src="Houzy Touchpoint (dark).png" alt="">
+    </button>
+  </div>
+
+  <script>
+    const row1 = [
+      { border: 'rgba(175,210,185,0.3)', icon: 'https://www.figma.com/api/mcp/asset/95182d5d-e1be-45c8-9520-cf3f898e84b6.svg', text: '2 BHK fully furnished properties for rent' },
+      { border: 'rgba(245,153,147,0.3)', icon: 'https://www.figma.com/api/mcp/asset/63cf3668-fa08-4243-8d47-837495c2f25f.svg', text: 'Show properties near me' },
+      { border: '#e1e2e8',               icon: 'https://www.figma.com/api/mcp/asset/f76a7fa6-051d-432c-be0c-89a87fc3fd14.svg', text: '3 BHK properties between ₹2 – 2.5 Cr' },
+      { border: '#e1e2e8',               icon: 'https://www.figma.com/api/mcp/asset/e4925db9-37d9-4811-af34-0d3bcad3c84b.svg', text: 'Show trending localities in my area' },
+    ];
+
+    const row2 = [
+      { border: 'rgba(244,152,143,0.3)', icon: 'https://www.figma.com/api/mcp/asset/daefe1f8-f35e-4235-935a-6264519b2f72.svg', text: 'Compare localities' },
+      { border: 'rgba(255,211,109,0.5)', icon: 'https://www.figma.com/api/mcp/asset/ab1140ae-ece9-4732-adda-fb8c33b0dceb.svg', text: 'Check locality reviews' },
+      { border: 'rgba(194,169,236,0.3)', icon: 'https://www.figma.com/api/mcp/asset/dba4a9ed-ae83-438c-b5d2-85079fd9fb99.svg', text: 'Show me under construction projects' },
+      { border: '#e1e2e8',               icon: 'https://www.figma.com/api/mcp/asset/69b6b933-aff3-4edb-aa7d-069d61d3347a.svg', text: 'Check locality price trends' },
+    ];
+
+    function buildTrack(pills, el) {
+      // Duplicate for seamless -50% loop
+      [...pills, ...pills].forEach(p => {
+        const btn = document.createElement('button');
+        btn.className = 'pill';
+        btn.style.borderColor = p.border;
+        btn.innerHTML = `<img src="${p.icon}" alt=""><span class="pill-text">${p.text}</span>`;
+        el.appendChild(btn);
+      });
+    }
+
+    buildTrack(row1, document.getElementById('track1'));
+    buildTrack(row2, document.getElementById('track2'));
+
+    const panel   = document.getElementById('houzy-panel');
+    const openBtn = document.getElementById('houzy-touchpoint');
+    const closeBtn = document.getElementById('houzy-close');
+
+    const sb = document.getElementById('intl-snackbar');
+
+    // ── Position snackbar ──
+    sb.style.bottom = '88px';
+
+    // ── Snackbar helpers ──
+    function showSnackbar(bounce) {
+      if (bounce) {
+        // Reset animation so it can replay
+        sb.style.animation = 'none';
+        sb.style.transition = 'none';
+        void sb.offsetWidth; // force reflow
+        sb.style.animation = 'sb-pop 0.55s linear forwards';
+      } else {
+        // Simple fade-up for panel-close reappear
+        sb.style.animation = 'none';
+        sb.style.transition = 'opacity 0.32s ease, transform 0.32s ease';
+        sb.style.opacity = '1';
+        sb.style.transform = 'translateY(0) scale(1)';
+      }
+    }
+
+    function hideSnackbar() {
+      sb.style.animation = 'none';
+      sb.style.transition = 'opacity 0.28s ease, transform 0.28s ease';
+      sb.style.opacity = '0';
+      sb.style.transform = 'translateY(8px)';
+    }
+
+    // 1. Bounce in after 2s on load
+    setTimeout(() => showSnackbar(true), 2000);
+
+    // 2. Panel open/close toggle snackbar visibility
+    function openPanel() {
+      panel.classList.add('open');
+      openBtn.classList.add('hidden');
+      openBtn.setAttribute('aria-expanded', 'true');
+      hideSnackbar(); // dismiss animation
+    }
+
+    function closePanel() {
+      panel.classList.remove('open');
+      openBtn.classList.remove('hidden');
+      openBtn.setAttribute('aria-expanded', 'false');
+      showSnackbar(); // reappear animation
+    }
+
+    openBtn.addEventListener('click', openPanel);
+    closeBtn.addEventListener('click', closePanel);
+
+    // 3. Manual dismiss (×) — hides permanently
+    document.getElementById('intl-snackbar-close').addEventListener('click', () => {
+      sb.style.opacity = '0';
+      sb.style.transform = 'translateY(6px)';
+      setTimeout(() => { sb.style.display = 'none'; }, 400);
+    });
+  </script>
+</body>
+</html>
